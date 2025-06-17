@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/pinkpixel-dev-web-scout-mcp-badge.png)](https://mseep.ai/app/pinkpixel-dev-web-scout-mcp)
+
 <p align="center">
   <img src="assets/logo.png" alt="Web Scout MCP Logo" width="300"/>
 </p>
