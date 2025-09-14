@@ -67,7 +67,7 @@ const UrlContentExtractor: Tool = {
 const server = new Server(
   {
     name: "web-scout",
-    version: "1.5.1"
+    version: "1.5.2"
   },
   {
     capabilities: {

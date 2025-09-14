@@ -25,16 +25,17 @@ ReferenceError: File is not defined
 ```json
 {
   "dependencies": {
-    "axios": "^1.7.7"  // Changed from ^1.9.0
+    "axios": "^1.12.2"  // Secure version that works on Linux
   }
 }
 ```
 
 **Steps:**
-1. Edit `package.json` and change axios version to `^1.7.7`
-2. Run `npm install` to update dependencies
-3. Rebuild your server (`npm run build`)
-4. Test that server starts successfully
+1. Edit `package.json` and change axios version to `^1.12.2`
+2. Run `npm install` to update dependencies  
+3. Run `npm audit fix` to resolve security vulnerabilities
+4. Rebuild your server (`npm run build`)
+5. Test that server starts successfully
 
 ## 🧪 Testing the Fix
 
@@ -49,8 +50,9 @@ timeout 5s node dist/index.js || echo "Server started successfully"
 ## 📋 Checklist for Other Servers
 
 - [ ] Check `package.json` for axios version ≥ 1.9.0
-- [ ] Change axios version to `^1.7.7`
+- [ ] Change axios version to `^1.12.2`
 - [ ] Run `npm install` to update
+- [ ] Run `npm audit fix` to resolve security issues
 - [ ] Update version number (patch bump)
 - [ ] Rebuild with `npm run build`
 - [ ] Test server starts without File errors
@@ -84,4 +86,5 @@ Any MCP server with these characteristics may need this fix:
 
 ---
 
-**Fixed in Web Scout MCP v1.5.1** - September 14, 2025
+**Fixed in Web Scout MCP v1.5.2** - September 14, 2025  
+**Security vulnerabilities resolved** - All dependencies updated to secure versions

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.2] - 2025-09-14
+
+### Security
+- Fixed critical vulnerability in form-data dependency (CVE-2023-40582)
+- Fixed high severity DoS vulnerability in axios dependency (CVE-2023-45857)
+- Upgraded axios to v1.12.2 which maintains Linux compatibility while fixing security issues
+- Upgraded form-data to v4.0.4+ 
+
+### Changed
+- Dependencies updated to secure versions via npm audit fix
+
 ## [1.5.1] - 2025-09-14
 
 ### Fixed
