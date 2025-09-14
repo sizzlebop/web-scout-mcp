@@ -1,216 +1,316 @@
-# Web Scout MCP Server - Technical Overview
+# Web Scout MCP Server - Technical Overview 📡
 
-## Project Overview
+*Last updated: September 14, 2025*
 
-The Web Scout MCP Server is a Model Context Protocol (MCP) server implementation that provides web search and content extracting capabilities. It allows AI assistants and other MCP clients to search the web using DuckDuckGo and extract content from web pages, enabling them to access up-to-date information from the internet.
+## 🎯 Project Overview
 
-## Key Features
+The Web Scout MCP Server is a robust Model Context Protocol (MCP) server implementation that provides comprehensive web search and content extraction capabilities. Built with TypeScript and Node.js, it enables AI assistants and other MCP clients to seamlessly access real-time information from the web through DuckDuckGo search and intelligent content extraction from web pages.
 
-- **DuckDuckGo Search**: Performs web searches using DuckDuckGo
-- **Web Content Fetching**: Retrieves and extracts content from web pages
-- **Multiple URL Support**: Can extract content from multiple URLs in parallel
-- **Memory Management**: Implements optimizations to prevent memory issues
-- **Rate Limiting**: Prevents API blocks by limiting request frequency
+This server is designed as a production-ready solution for AI systems that need reliable access to current web information while maintaining optimal performance through advanced memory management and rate limiting.
 
-## Architecture
+## ✨ Key Features
 
-The project is structured as a TypeScript Node.js application that implements the Model Context Protocol (MCP). It uses the `@modelcontextprotocol/sdk` package to handle the MCP server implementation.
+- **🔍 DuckDuckGo Search**: Privacy-focused web search with intelligent result filtering
+- **📄 Web Content Extraction**: Clean text extraction from web pages with HTML parsing
+- **🚀 Parallel Processing**: Concurrent extraction from multiple URLs with smart batching
+- **💾 Advanced Memory Management**: Sophisticated memory optimization to prevent crashes
+- **⏱️ Intelligent Rate Limiting**: Adaptive request throttling to avoid API blocks
+- **🛡️ Robust Error Handling**: Comprehensive error management with context logging
+- **🐳 Docker Support**: Containerized deployment with multi-stage builds
+- **📦 Easy Installation**: Available via npm, Smithery, and Docker
 
-### Core Components
+## 🏗️ Architecture
 
-1. **MCP Server**: Handles MCP protocol communication with clients
-2. **DuckDuckGoSearcher**: Implements web search functionality
-3. **WebContentFetcher**: Implements content fetching with memory optimizations
-4. **RateLimiter**: Provides rate limiting for external API requests
+The project follows a modular architecture with clear separation of concerns:
 
-## Technical Implementation
-
-### MCP Server
-
-The server is implemented using the `@modelcontextprotocol/sdk` package and exposes two main tools:
-
-1. `DuckDuckGoWebSearch`: Performs web searches using DuckDuckGo
-2. `UrlContentExtractor`: Fetches and parses content from web pages
-
-The server uses the StdioServerTransport for communication, making it compatible with various MCP clients.
-
-### DuckDuckGoSearcher
-
-This class handles web searches through DuckDuckGo's HTML interface:
-
-- Makes POST requests to DuckDuckGo's HTML endpoint
-- Parses HTML responses using cheerio
-- Extracts search results (title, link, snippet)
-- Formats results for consumption by LLMs
-- Implements rate limiting to prevent API blocks
-
-```typescript
-async search(query: string, ctx: Context, maxResults: number = 10): Promise<SearchResult[]> {
-  // Apply rate limiting
-  await this.rateLimiter.acquire();
-  
-  // Create form data for POST request
-  const data = {
-    q: query,
-    b: "",
-    kl: "",
-  };
-  
-  // Make request to DuckDuckGo
-  const response = await axios.post(
-    DuckDuckGoSearcher.BASE_URL,
-    new URLSearchParams(data),
-    {
-      headers: DuckDuckGoSearcher.HEADERS,
-      timeout: 30000
-    }
-  );
-  
-  // Parse results using cheerio
-  // ...
-}
+```
+📁 web-scout-mcp/
+├── 📄 src/index.ts          # Main server implementation (single file architecture)
+├── 📦 package.json         # Project configuration and dependencies
+├── 🐳 Dockerfile           # Multi-stage Docker build configuration
+├── ⚙️ smithery.yaml        # Smithery deployment configuration
+├── 📚 README.md            # User documentation
+├── 📋 OVERVIEW.md          # Technical documentation (this file)
+├── 📝 CHANGELOG.md         # Version history
+├── 🤝 CONTRIBUTING.md      # Contribution guidelines
+├── 📄 LICENSE              # MIT License
+└── 🖼️ assets/logo.png      # Project logo
 ```
 
-### WebContentFetcher
+### 🔧 Core Components
 
-This class handles fetching and parsing content from web pages:
+1. **MCP Server**: Handles MCP protocol communication using `@modelcontextprotocol/sdk`
+2. **DuckDuckGoSearcher**: Implements privacy-focused web search functionality
+3. **WebContentFetcher**: Advanced content extraction with memory optimizations
+4. **RateLimiter**: Intelligent request throttling system
 
-- Extracts content using axios
-- Processes HTML using cheerio to extract text
-- Implements memory management optimizations
-- Supports extracting content from multiple URLs in parallel
-- Uses batch processing based on available memory
+## 🔬 Technical Implementation Details
 
-#### Memory Management
+### 📡 MCP Server Implementation
 
-The WebContentFetcher includes sophisticated memory management:
+The server leverages the `@modelcontextprotocol/sdk` (v1.11.1) and exposes exactly two MCP tools:
 
-- Monitors system memory usage
-- Uses temporary files for large content
-- Adjusts batch sizes based on available memory
-- Implements cleanup for temporary files
-- Forces garbage collection when available
+- **`DuckDuckGoWebSearch`**: Web search with configurable result limits
+- **`UrlContentExtractor`**: Content extraction supporting both single and batch operations
+
+The server uses `StdioServerTransport` for communication, ensuring compatibility with all MCP clients including Claude Desktop, Cursor, and other AI development environments.
 
 ```typescript
-private async processHtml(html: string): Promise<string> {
-  // Process in memory or offload to temp file based on size
-  const memoryStats = await this.getMemoryStats();
-  
-  if (html.length > this.MAX_IN_MEMORY_SIZE || memoryStats.usagePercentage > 70) {
-    // Write to temporary file and process in chunks
-    const tempFilePath = path.join(os.tmpdir(), `mcp-fetch-${uuidv4()}.html`);
-    this.tempFiles.push(tempFilePath);
-    
-    await fs.writeFile(tempFilePath, html);
-    
-    // Process the file in a memory-efficient way
-    // ...
-  } else {
-    // Process in memory
-    // ...
-  }
-}
-```
-
-### Rate Limiting
-
-The RateLimiter class provides rate limiting for external API requests:
-
-- Tracks request timestamps
-- Enforces maximum requests per minute
-- Implements waiting mechanism when rate limit is reached
-
-```typescript
-async acquire(): Promise<void> {
-  const now = new Date();
-  // Remove requests older than 1 minute
-  this.requests = this.requests.filter(
-    req => now.getTime() - req.getTime() < 60 * 1000
-  );
-
-  if (this.requests.length >= this.requestsPerMinute) {
-    // Wait until we can make another request
-    const oldestRequest = this.requests[0];
-    const waitTime = 60 - (now.getTime() - oldestRequest.getTime()) / 1000;
-    if (waitTime > 0) {
-      await new Promise(resolve => setTimeout(resolve, waitTime * 1000));
+const server = new Server(
+  {
+    name: "web-scout",
+    version: "1.5.0"
+  },
+  {
+    capabilities: {
+      tools: {}
     }
   }
+);
+```
 
-  this.requests.push(now);
+### 🔍 DuckDuckGoSearcher Class
+
+Implements web search through DuckDuckGo's HTML interface with the following features:
+
+- **Privacy-First**: Uses DuckDuckGo's HTML endpoint (no API keys required)
+- **POST Requests**: Reduces rate limiting compared to GET requests
+- **Result Filtering**: Automatically filters out advertisements and irrelevant results
+- **URL Cleanup**: Handles DuckDuckGo's redirect URLs (`//duckduckgo.com/l/?uddg=`)
+- **Structured Results**: Returns formatted results optimized for LLM consumption
+
+**Key Implementation Features:**
+- Rate limiting: 30 requests per minute
+- Request timeout: 30 seconds
+- Comprehensive error handling with context logging
+- Results formatted with position, title, URL, and snippet
+
+### 📄 WebContentFetcher Class
+
+**Critical Memory Management Features:**
+
+The WebContentFetcher implements sophisticated memory management to handle large web pages without crashing:
+
+#### 🧠 Memory Optimization Strategy
+
+1. **Size-Based Processing**: Content >5MB automatically uses temporary files
+2. **Memory Monitoring**: Real-time system memory usage tracking
+3. **Adaptive Processing**: Switches to file-based processing when memory usage >70%
+4. **Batch Size Adjustment**: Dynamic concurrent URL processing (1-5 URLs based on memory pressure)
+5. **Automatic Cleanup**: Temp file cleanup on process exit and SIGINT
+6. **Garbage Collection**: Forces GC when available between batches
+
+#### 🔄 Batch Processing Logic
+
+```typescript
+// Memory-aware batch size determination
+let batchSize = 3; // Default
+if (memoryStats.usagePercentage > 70) {
+  batchSize = 1; // Reduce for memory constraints
+} else if (memoryStats.usagePercentage < 30) {
+  batchSize = 5; // Increase when plenty of memory
 }
 ```
 
-## Installation and Usage
+#### 🧹 Content Processing
 
-### Installation
+- **HTML Cleanup**: Removes `<script>`, `<style>`, `<nav>`, `<header>`, `<footer>` elements
+- **Text Normalization**: Whitespace normalization and trimming
+- **Content Truncation**: 8000 character limit per page with truncation indicator
+- **Error Isolation**: Individual URL failures don't affect batch processing
+
+### ⏱️ RateLimiter Class
+
+Implements sliding window rate limiting:
+
+- **Search Operations**: 30 requests per minute
+- **Content Fetching**: 20 requests per minute
+- **Sliding Window**: Automatically removes expired timestamps
+- **Intelligent Waiting**: Calculates optimal wait times
+- **Memory Efficient**: Automatic cleanup of old request records
+
+## 🛠️ Development Environment
+
+### 📋 Requirements
+- **Node.js**: >=18.0.0
+- **TypeScript**: ^5.8.3
+- **ES Modules**: Full ES module support
+- **Target**: ES2020 with NodeNext module resolution
+
+### 🔗 Dependencies
+
+**Production Dependencies:**
+- `@modelcontextprotocol/sdk`: ^1.11.1 (MCP protocol implementation)
+- `axios`: ^1.9.0 (HTTP client)
+- `cheerio`: ^1.0.0 (HTML parsing)
+- `uuid`: ^11.1.0 (Unique ID generation for temp files)
+- `async`: ^3.2.6 (Async utilities)
+- `zod`: 3.24.4 (Schema validation)
+- `jsdoctypeparser`: ^9.0.0 (Type parsing)
+
+**Development Dependencies:**
+- `@types/node`: ^22.15.17
+- `@types/uuid`: ^10.0.0
+- `typescript`: ^5.8.3
+
+### 🚀 Build Commands
+
+```bash
+# Build TypeScript to JavaScript
+npm run build
+
+# Start the server (requires build first)
+npm start
+
+# Production build (same as build)
+npm run production
+
+# Run directly from source during development
+npx tsx src/index.ts
+
+# Test with MCP Inspector
+npx @modelcontextprotocol/inspector node dist/index.js
+```
+
+## 📦 Installation Options
+
+### 🌟 Via Smithery (Recommended)
+
+```bash
+npx -y @smithery/cli install @pinkpixel-dev/web-scout-mcp --client claude
+```
+
+### 🌐 Global Installation
 
 ```bash
 npm install -g @pinkpixel/web-scout-mcp
-```
-
-### Command Line Usage
-
-```bash
 web-scout-mcp
 ```
 
-### Integration with MCP Clients
+### 🐳 Docker Usage
 
-Add to your MCP client's `config.json`:
+```bash
+# Build container
+docker build -t web-scout-mcp .
+
+# Run container (stdio mode)
+docker run -i web-scout-mcp
+```
+
+### ⚙️ MCP Client Configuration
+
+Add to your MCP client's configuration:
 
 ```json
 {
   "mcpServers": {
-    "web-search": {
+    "web-scout": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@pinkpixel/web-scout-mcp"
-      ]
+      "args": ["-y", "@pinkpixel/web-scout-mcp"]
     }
   }
 }
 ```
 
-## Tool Usage
+## 🧰 MCP Tools Specification
 
-### DuckDuckGoWebSearch
+### 🔍 DuckDuckGoWebSearch
 
-Search DuckDuckGo and return formatted results.
+**Purpose**: Performs privacy-focused web searches using DuckDuckGo
 
-Parameters:
-- `query` (string): The search query string
-- `maxResults` (number, optional): Maximum number of results to return (default: 10)
-
-### UrlContentExtractor
-
-Retrieve and extract content from one or more webpage URLs.
-
-Parameters:
-- `url`: Either a single URL string or an array of URL strings
-
-## Development
-
-```bash
-# Clone the repository
-git clone https://github.com/pinkpixe-dev/web-scout-mcp.git
-cd web-scout-mcp
-
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Run
-npm start
+**Input Schema**:
+```json
+{
+  "query": "string (required)",
+  "maxResults": "number (optional, default: 10)"
+}
 ```
 
-## License
+**Output**: Formatted text with numbered results including titles, URLs, and snippets
 
-This project is licensed under the MIT License.
+**Example Usage**:
+```json
+{
+  "query": "latest developments in AI safety",
+  "maxResults": 5
+}
+```
+
+### 📄 UrlContentExtractor
+
+**Purpose**: Extracts clean, readable content from web pages
+
+**Input Schema**:
+```json
+{
+  "url": "string | string[] (required)"
+}
+```
+
+**Features**:
+- Single URL processing returns plain text
+- Multiple URL processing returns JSON object with URL->content mapping
+- Automatic content truncation at 8000 characters
+- Memory-efficient batch processing
+
+**Example Usage**:
+```json
+{
+  "url": [
+    "https://example.com/article1",
+    "https://example.com/article2"
+  ]
+}
+```
+
+## 🔐 Security & Performance
+
+### 🛡️ Security Features
+- No API keys required (uses DuckDuckGo HTML interface)
+- Input validation and sanitization
+- Rate limiting to prevent abuse
+- Error handling that doesn't expose system information
+- Temporary file cleanup to prevent information leakage
+
+### ⚡ Performance Optimizations
+- Memory-aware processing to prevent crashes
+- Intelligent batching based on system resources
+- Request pooling and timeout management
+- Garbage collection optimization
+- Efficient HTML parsing with cheerio
+
+## 🚀 Deployment
+
+### 🌐 Smithery Platform
+The server is available on [Smithery](https://smithery.ai/server/@pinkpixel-dev/web-scout-mcp) for easy installation and management.
+
+### 📦 NPM Registry
+Published as `@pinkpixel/web-scout-mcp` on npm registry for global installation.
+
+### 🐳 Docker Hub
+Docker image available with multi-stage builds for optimized container size.
+
+## 📄 Project Information
+
+- **Version**: 1.5.0
+- **License**: MIT
+- **Author**: Pink Pixel (admin@pinkpixel.dev)
+- **Repository**: https://github.com/pinkpixel-dev/web-scout-mcp
+- **Homepage**: https://pinkpixel.dev
+- **NPM Package**: @pinkpixel/web-scout-mcp
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
+
+## 📋 Version History
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
 
 ---
 
-*Last updated: May 10, 2025*
+<p align="center">
+  <sub>Made with ❤️ by <a href="https://pinkpixel.dev">Pink Pixel</a></sub>
+  <br>
+  <sub>✨ Dream it, Pixel it ✨</sub>
+</p>
