@@ -1,25 +1,15 @@
-FROM node:22.12-alpine AS builder
-
-# Must be entire project because `prepare` script is run during `npm install` and requires all files.
-COPY src /app/src
-COPY tsconfig.json app/tsconfig.json
-COPY package.json /app/package.json
-COPY package-lock.json /app/package-lock.json
-
+FROM node:lts-alpine
 WORKDIR /app
 
-RUN npm install && npm run build
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install --ignore-scripts
 
-FROM node:22-alpine AS release
+# Copy the rest of the application
+COPY . .
 
-WORKDIR /app
+# Expose port if needed (optional, as MCP servers might not require it)
+# EXPOSE 3000
 
-COPY --from=builder /app/dist /app/dist
-COPY --from=builder /app/package.json /app/package.json
-COPY --from=builder /app/package-lock.json /app/package-lock.json
-
-ENV NODE_ENV=production
-
-RUN npm ci --ignore-scripts --omit-dev
-
-ENTRYPOINT ["node", "dist/index.js"]
+# Run the MCP server
+CMD ["node", "pollinations-mcp-server.js"]
