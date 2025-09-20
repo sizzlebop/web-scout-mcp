@@ -1,26 +1,14 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Server as CoreServer } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  ListToolsRequestSchema,
-  CallToolRequestSchema,
-  ErrorCode,
-  McpError,
-  Tool,
-} from "@modelcontextprotocol/sdk/types.js";
-import type {
-  CallToolRequest,
-  ServerNotification,
-  ServerRequest,
-} from "@modelcontextprotocol/sdk/types.js";
-import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import * as os from "os";
 import { v4 as uuidv4 } from "uuid";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { z } from "zod";
 
 // Define the Context interface if not already defined
 interface Context {
@@ -31,64 +19,20 @@ interface CreateServerOptions {
   config: Record<string, unknown>;
 }
 
-const DuckDuckGoWebSearch: Tool = {
-  name: "DuckDuckGoWebSearch",
-  description: 
-        "Initiates a web search query using the DuckDuckGo search engine and returns a well-structured list of findings. Input the keywords, question, or topic you want to search for using DuckDuckGo as your query. Input the maximum number of search entries you'd like to receive using maxResults - defaults to 10 if not provided.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      query: {
-        type: "string",
-        description: "Search query string",
-      },
-      maxResults: {
-        type: "number",
-        description: "Maximum number of results to return (default: 10)"
-      }
-    },
-    required: ["query"]
-  }
-};
-
-const UrlContentExtractor: Tool = {
-  name: "UrlContentExtractor",
-  description:
-        "Fetches and extracts content from a given webpage URL. Input the URL of the webpage you want to extract content from as a string using the url parameter. You can also input an array of URLs to fetch content from multiple pages at once.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      url: {
-        oneOf: [
-          { type: "string", description: "The webpage URL to fetch content from" },
-          { 
-            type: "array", 
-            items: { type: "string" },
-            description: "List of webpage URLs to get content from"
-          }
-        ]
-      }
-    },
-    required: ["url"]
-  }
-};
-
-
 // Server implementation
 export default function createServer({ config }: CreateServerOptions) {
   // config contains user-provided settings (see configSchema below)
-const server = new McpServer(
-  {
-    name: "web-scout",
-    version: "1.5.2"
-  },
-  {
-    capabilities: {
-      tools: {},
+  const server = new McpServer(
+    {
+      name: "web-scout",
+      version: "1.5.3"
     },
-  },
-);
-const baseServer: CoreServer = server.server;
+    {
+      capabilities: {
+        tools: {},
+      },
+    },
+  );
 
 // Define interfaces for the data structures
 interface SearchResult {
@@ -241,7 +185,6 @@ class DuckDuckGoSearcher {
         await ctx.error(`HTTP error occurred: ${error.message}`);
       } else {
         await ctx.error(`Unexpected error during search: ${(error as Error).message}`);
-        console.error(error);
       }
       return [];
     }
@@ -438,118 +381,106 @@ class WebContentFetcher {
   }
 }
 
-// Tool handlers
-baseServer.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [DuckDuckGoWebSearch, UrlContentExtractor],
-}));
+const searcher = new DuckDuckGoSearcher();
+const fetcher = new WebContentFetcher();
 
-baseServer.setRequestHandler(
-  CallToolRequestSchema,
-  async (
-    request: CallToolRequest,
-    extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
-  ) => {
-    try {
-      const { name, arguments: args } = request.params;
+const createContextAdapter = (): Context => ({
+  error: async () => {
+    /* no-op */
+  },
+});
 
-      if (!args) {
-        throw new Error("No arguments provided");
-      }
+server.registerTool(
+  "DuckDuckGoWebSearch",
+  {
+    description:
+      "Initiates a web search query using the DuckDuckGo search engine and returns a well-structured list of findings. Input the keywords, question, or topic you want to search for using DuckDuckGo as your query. Input the maximum number of search entries you'd like to receive using maxResults - defaults to 10 if not provided.",
+    inputSchema: {
+      query: z
+        .string()
+        .min(1, "Query is required")
+        .describe("Search query string"),
+      maxResults: z
+        .number()
+        .int()
+        .min(1)
+        .max(25)
+        .optional()
+        .describe("Maximum number of results to return (default: 10)"),
+    },
+  },
+  async (args) => {
+    const context = createContextAdapter();
+    const searchResults = await searcher.search(
+      args.query,
+      context,
+      args.maxResults ?? 10,
+    );
+    const result = searcher.formatResultsForLLM(searchResults);
 
-      switch (name) {
-        case "DuckDuckGoWebSearch": {
-          if (
-            typeof args !== "object" ||
-            args === null ||
-            typeof args.query !== "string"
-          ) {
-            throw new McpError(
-              ErrorCode.InvalidParams,
-              "Invalid search arguments. Expected { query: string, maxResults?: number }",
-            );
-          }
-
-          const query = args.query;
-          const maxResults = typeof args.maxResults === "number" ? args.maxResults : 10;
-
-          const contextAdapter: Context = {
-            error: async (message: string) => console.error(message),
-          };
-          const searcher = new DuckDuckGoSearcher();
-          const searchResults = await searcher.search(query, contextAdapter, maxResults);
-          const result = searcher.formatResultsForLLM(searchResults);
-
-          return {
-            content: [{ type: "text", text: result }],
-            isError: false,
-          };
-        }
-
-        case "UrlContentExtractor": {
-          if (typeof args !== "object" || args === null) {
-            throw new McpError(
-              ErrorCode.InvalidParams,
-              "Invalid fetch_content arguments. Expected { url: string | string[] }",
-            );
-          }
-
-          const fetcher = new WebContentFetcher();
-          const contextAdapter: Context = {
-            error: async (message: string) => console.error(message),
-          };
-
-          if (typeof args.url === "string") {
-            const result = await fetcher.fetchAndParse(args.url, contextAdapter);
-            return {
-              content: [{ type: "text", text: result }],
-              isError: false,
-            };
-          }
-
-          if (Array.isArray(args.url)) {
-            const results = await fetcher.fetchMultipleUrls(args.url, contextAdapter);
-            return {
-              content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
-              isError: false,
-            };
-          }
-
-          throw new McpError(
-            ErrorCode.InvalidParams,
-            "Invalid URL format. Expected string or array of strings.",
-          );
-        }
-
-        default:
-          return {
-            content: [{ type: "text", text: `Unknown tool: ${name}` }],
-            isError: true,
-          };
-      }
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
-        isError: true,
-      };
-    }
+    return {
+      content: [{ type: "text", text: result }],
+      isError: false,
+    };
   },
 );
 
-async function runServer() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("Web Scout MCP Server running on stdio");
+server.registerTool(
+  "UrlContentExtractor",
+  {
+    description:
+      "Fetches and extracts content from a given webpage URL. Input the URL of the webpage you want to extract content from as a string using the url parameter. You can also input an array of URLs to fetch content from multiple pages at once.",
+    inputSchema: {
+      url: z
+        .union([
+          z
+            .string()
+            .url("Must be a valid URL")
+            .describe("The webpage URL to fetch content from"),
+          z
+            .array(z.string().url("Each entry must be a valid URL"))
+            .min(1)
+            .describe("List of webpage URLs to get content from"),
+        ])
+        .describe("URL or list of URLs to fetch"),
+    },
+  },
+  async (args) => {
+    const context = createContextAdapter();
+
+    if (typeof args.url === "string") {
+      const result = await fetcher.fetchAndParse(args.url, context);
+      return {
+        content: [{ type: "text", text: result }],
+        isError: false,
+      };
+    }
+
+    if (Array.isArray(args.url)) {
+      const results = await fetcher.fetchMultipleUrls(args.url, context);
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+        isError: false,
+      };
+    }
+
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      "Invalid URL format. Expected string or array of strings.",
+    );
+  },
+);
+
+return server.server; // Must return the MCP server object
 }
 
-runServer().catch((error) => {
-  console.error("Error starting server:", error);
-  process.exit(1);
-});
+const shouldAutostart =
+  typeof process !== "undefined" && process.env.WEB_SCOUT_DISABLE_AUTOSTART !== "1";
 
-return baseServer; // Must return the MCP server object
+if (shouldAutostart) {
+  const runtimeServer = createServer({ config: {} });
+  const transport = new StdioServerTransport();
+  runtimeServer.connect(transport).catch(() => {
+    process.exit(1);
+  });
 }

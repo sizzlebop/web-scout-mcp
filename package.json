@@ -1,6 +1,6 @@
 {
   "name": "@pinkpixel/web-scout-mcp",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "MCP server for web search and content extraction with multiple URL support and memory optimizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,11 +40,10 @@
     "cheerio": "^1.1.2",
     "jsdoctypeparser": "^9.0.0",
     "uuid": "^13.0.0",
-    "zod": "4.1.9"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
-    "@types/uuid": "^11.0.0",
     "typescript": "^5.9.2"
   },
   "engines": {
