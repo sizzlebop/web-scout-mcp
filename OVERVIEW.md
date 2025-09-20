@@ -59,7 +59,7 @@ The server uses `StdioServerTransport` for communication, ensuring compatibility
 const server = new Server(
   {
     name: "web-scout",
-    version: "1.5.4"
+    version: "1.5.5"
   },
   {
     capabilities: {
@@ -140,18 +140,17 @@ Implements sliding window rate limiting:
 ### 🔗 Dependencies
 
 **Production Dependencies:**
-- `@modelcontextprotocol/sdk`: ^1.11.1 (MCP protocol implementation)
-- `axios`: ^1.9.0 (HTTP client)
-- `cheerio`: ^1.0.0 (HTML parsing)
-- `uuid`: ^11.1.0 (Unique ID generation for temp files)
+- `@modelcontextprotocol/sdk`: ^1.18.1 (MCP protocol implementation)
+- `axios`: ^3.2.6 (HTTP client)
+- `cheerio`: ^1.12.2 (HTML parsing)
+- `uuid`: ^13.0.0 (Unique ID generation for temp files)
 - `async`: ^3.2.6 (Async utilities)
-- `zod`: 3.24.4 (Schema validation)
+- `zod`: ^3.23.8 (Schema validation)
 - `jsdoctypeparser`: ^9.0.0 (Type parsing)
 
 **Development Dependencies:**
-- `@types/node`: ^22.15.17
-- `@types/uuid`: ^10.0.0
-- `typescript`: ^5.8.3
+- `@types/node`: ^24.5.2
+- `typescript`: ^5.9.2
 
 ### 🚀 Build Commands
 

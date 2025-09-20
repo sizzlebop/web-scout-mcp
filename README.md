@@ -69,7 +69,7 @@ Add this to your MCP client's `config.json` (Claude Desktop, Cursor, etc.):
       "command": "npx",
       "args": [
         "-y",
-        "@pinkpixel/web-scout-mcp"
+        "@pinkpixel/web-scout-mcp@latest"
       ]
     }
   }

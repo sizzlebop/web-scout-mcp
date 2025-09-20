@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.4] - 2025-09-19
+## [1.5.5] - 2025-09-19
 
 ### Added
 - Automatic stdio boot when the package entrypoint is executed directly, with an opt-out via `WEB_SCOUT_DISABLE_AUTOSTART` for embedded runtimes.

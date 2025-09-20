@@ -1,6 +1,6 @@
 {
   "name": "@pinkpixel/web-scout-mcp",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "MCP server for web search and content extraction with multiple URL support and memory optimizations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,7 +32,7 @@
     "content-extraction"
   ],
   "author": "Pink Pixel",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.1",
     "async": "^3.2.6",
