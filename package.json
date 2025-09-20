@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "module": "src/index.ts",
   "bin": {
     "web-scout-mcp": "./dist/index.js"
   },
@@ -12,9 +13,11 @@
     "dist/**/*"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npx @smithery/cli build",
+    "dev": "npx @smithery/cli dev",
     "start": "node dist/index.js",
     "production": "npm run build"
+
   },
   "repository": {
     "type": "git",
@@ -31,18 +34,18 @@
   "author": "Pink Pixel",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.11.1",
+    "@modelcontextprotocol/sdk": "^1.18.1",
     "async": "^3.2.6",
     "axios": "^1.12.2",
-    "cheerio": "^1.0.0",
+    "cheerio": "^1.1.2",
     "jsdoctypeparser": "^9.0.0",
-    "uuid": "^11.1.0",
-    "zod": "3.24.4"
+    "uuid": "^13.0.0",
+    "zod": "4.1.9"
   },
   "devDependencies": {
-    "@types/node": "^22.15.17",
-    "@types/uuid": "^10.0.0",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.5.2",
+    "@types/uuid": "^11.0.0",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=18.0.0"
