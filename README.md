@@ -5,12 +5,12 @@
 </p>
 
 <h1 align="center">Web Scout MCP Server</h1>
-
 <p align="center">
   <a href="https://www.npmjs.com/package/@pinkpixel/web-scout-mcp"><img src="https://img.shields.io/npm/v/@pinkpixel/web-scout-mcp.svg" alt="npm version"></a>
   <a href="https://github.com/pinkpixel-dev/web-scout-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="https://nodejs.org/en/"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg" alt="Node.js Version"></a>
-  <a href="https://smithery.ai/server/@pinkpixel-dev/web-scout-mcp"><img alt="Smithery Badge" src="https://smithery.ai/badge/@pinkpixel-dev/web-scout-mcp"></a>
+  <a href="https://smithery.ai/badge/@pinkpixel-dev/web-scout-mcp"><img alt="Smithery Badge" src="https://smithery.ai/badge/@pinkpixel-dev/web-scout-mcp"></a>
+  <a href="https://mseep.ai/app/f19a6453-c635-4bc8-b26a-3e9e36428a98"><img src="https://mseep.ai/badge.svg" alt="Verified on MseeP"></a>
 </p>
 
 <p align="center">
