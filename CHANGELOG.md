@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.4] - 2025-09-19
+
+### Added
+- Automatic stdio boot when the package entrypoint is executed directly, with an opt-out via `WEB_SCOUT_DISABLE_AUTOSTART` for embedded runtimes.
+
+### Changed
+- Registered DuckDuckGo search and URL extraction tools using the MCP helper APIs and Zod schemas so Smithery and other clients can index them reliably.
+- Standardised tool context handling and dependency alignment by updating the project to use `zod@^3.23.8`, matching the MCP SDK expectations.
+
+### Fixed
+- Eliminated all stdout/stderr logging to keep the protocol stream silent across clients.
+- Ensured local and client-spawned executions establish the MCP handshake consistently.
+
 ## [1.5.2] - 2025-09-14
 
 ### Security

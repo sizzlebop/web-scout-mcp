@@ -76,6 +76,10 @@ Add this to your MCP client's `config.json` (Claude Desktop, Cursor, etc.):
 }
 ```
 
+### Environment Variables
+
+Set the `WEB_SCOUT_DISABLE_AUTOSTART=1` environment variable when embedding the package and calling `createServer()` yourself. By default running the published entrypoint (for example `node dist/index.js` or `npx @pinkpixel/web-scout-mcp`) automatically bootstraps the stdio transport.
+
 ## 🧰 Tools
 
 The server provides the following MCP tools:

@@ -25,7 +25,7 @@ export default function createServer({ config }: CreateServerOptions) {
   const server = new McpServer(
     {
       name: "web-scout",
-      version: "1.5.3"
+      version: "1.5.4"
     },
     {
       capabilities: {

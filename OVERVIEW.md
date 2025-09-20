@@ -1,6 +1,6 @@
 # Web Scout MCP Server - Technical Overview 📡
 
-*Last updated: September 14, 2025*
+*Last updated: September 19, 2025*
 
 ## 🎯 Project Overview
 
@@ -59,7 +59,7 @@ The server uses `StdioServerTransport` for communication, ensuring compatibility
 const server = new Server(
   {
     name: "web-scout",
-    version: "1.5.0"
+    version: "1.5.4"
   },
   {
     capabilities: {
